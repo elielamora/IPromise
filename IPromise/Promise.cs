@@ -136,24 +136,39 @@ namespace IPromise {
         {
             var promise = new Promise<T>();
             if (Pending)
-                throw new NotImplementedException();
+                Completed += (s, e) =>
+                {
+                    var completedPromise = (Promise<T>)s;
+                    if(completedPromise.Rejected)
+                        TryCatchRejection(promise, catchError);
+                    else
+                        promise.Fulfill(completedPromise.Value);
+                };
             else if (Fulfilled)
-                throw new NotImplementedException();
-            else 
+                promise.Fulfill(Value);
+            else
             {
-                try 
-                {
-                    catchError(this.Error);
-                    promise.Reject(this.error);
-                }
-                catch (Exception exception)
-                {
-                    promise.Reject(exception);
-                }
+                TryCatchRejection(promise, catchError);
             }
             return promise;
         }
+
+        private void TryCatchRejection(
+            Promise<T> promise,
+            Action<Exception> catchError) 
+        {
+            try
+            {
+                catchError(this.Error);
+                promise.Reject(this.error);
+            }
+            catch (Exception exception)
+            {
+                promise.Reject(exception);
+            }
+        }
     }
+
 
     public static class Promise {
         public static Promise<T> Pending<T>() =>

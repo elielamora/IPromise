@@ -54,5 +54,41 @@ namespace IPromise.Tests
             Assert.That(recaughtPromise.Error, Is.EqualTo(differentError));
             Assert.That(recaught, Is.True);
         }
+
+        [Test]
+        public void AttachCatchOnPendingPromiseLaterRejected()
+        {
+            bool caught = false;
+            var promise = Promise.Pending<int>();
+            var catchPromise = promise.Catch(e => {
+                caught = true;
+            });
+
+            Assert.That(promise.Pending);
+            Assert.That(catchPromise.Pending);
+
+            promise.Reject(error);
+
+            Assert.That(caught, Is.True);
+            Assert.That(promise.Rejected);
+            Assert.That(catchPromise.Rejected, Is.True);
+            Assert.That(catchPromise.Error, Is.EqualTo(error));
+        }
+
+        [Test]
+        public void AttachCatchOnPendingPromiseLaterFulfilled()
+        {
+            bool caught = false;
+            var promise = Promise.Pending<int>();
+            var catchPromise = promise.Catch(e => {
+                caught = true;
+            });
+
+            promise.Fulfill(84);
+
+            Assert.That(caught, Is.False);
+            Assert.That(catchPromise.Fulfilled);
+            Assert.That(catchPromise.Value, Is.EqualTo(84));
+        }
     }
 }
