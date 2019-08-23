@@ -22,12 +22,10 @@ namespace IPromise
 
         IPromise<U> Then<U>(
             Func<T, U> thenDo,
-            IPromiseQueue queue = null,
-            int delay = 0);
+            IPromiseQueue queue = null);
 
         IPromise<T> Catch(
             Action<Exception> catchError,
-            IPromiseQueue queue = null,
-            int delay = 0);
+            IPromiseQueue queue = null);
     }
 }
