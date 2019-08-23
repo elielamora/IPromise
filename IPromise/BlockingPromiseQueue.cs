@@ -5,23 +5,15 @@ namespace IPromise
 {
     public class BlockingPromiseQueue : IPromiseQueue
     {
-        public void Run<T>(
-            Action<Action<T>, Action<Exception>> promiseCallback,
-            Action<T> fulfill, 
-            Action<Exception> reject, 
-            int delay = 0
+        void IPromiseQueue.Run<T>(
+            Action<T> action,
+            T args,
+            int delay
         )
         {
             if (0 < delay)
                 Thread.Sleep(delay);
-            try
-            {
-                promiseCallback(fulfill, reject);
-            }
-            catch(Exception e)
-            {
-                reject(e);
-            }
+            action(args);
         }
     }
 }

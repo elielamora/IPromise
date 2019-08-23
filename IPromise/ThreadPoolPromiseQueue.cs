@@ -6,22 +6,14 @@ namespace IPromise
     internal class ThreadPoolPromiseQueue : IPromiseQueue
     {
         void IPromiseQueue.Run<T>(
-            Action<Action<T>, Action<Exception>> promiseCallback,
-            Action<T> fulfill,
-            Action<Exception> reject,
+            Action<T> action,
+            T args,
             int delay)
         {
             ThreadPool.QueueUserWorkItem((state) => {
                 if (0 < delay)
                     Thread.Sleep(delay);
-                try
-                {
-                    promiseCallback(fulfill, reject);
-                }
-                catch(Exception e)
-                {
-                    reject(e);
-                }
+                action(args);
             });
         }
     }

@@ -6,32 +6,57 @@ namespace IPromise {
 
     public sealed class Promise<T> : IPromise<T>
     {
+        internal static IPromiseQueue DefaultQueue { get; } = 
+            PromiseQueue.Blocking;
+
         internal event EventHandler<CompletedEventArgs<T>> Completed;
 
         /// <summary>
         /// Creates a new pending promise.
         /// </summary>
-        internal Promise() {
+        /// <param name="queue">The queue to run the action on.</param>
+        internal Promise(IPromiseQueue queue = null) 
+        {
+            Queue = queue ?? DefaultQueue;
         }
 
-        internal Promise(T value){
+        internal Promise(T value) : this(DefaultQueue)
+        {
             Fulfill(value);
         }
 
+        /// <summary>
+        /// Execute the promise that can be rejected.
+        /// </summary>
+        /// <param name="promise">The function to run.</param>
+        /// <param name="onQueue">The queue to execute on.</params>
+        /// <param name="delay">The delay in milliseconds to 
+        /// delay the execution.</param>
+        /// <returns>The promise handle.</returns>
         public Promise(
             Action<Action<T>, Action<Exception>> promise,
             IPromiseQueue onQueue = null,
             int delay = 0
-        )
+        ) : this(onQueue)
         {
-            var queue = onQueue ?? PromiseQueue.Blocking;
-            queue.Run(
-                promise,
-                Fulfill,
-                Reject,
+            Queue.Run(
+                (ValueTuple<Action<T>, Action<Exception>> actions) => {
+                    var (fulfill, reject) = actions;
+                    try
+                    {
+                        promise(fulfill, reject);
+                    }
+                    catch(Exception e)
+                    {
+                        reject(e);
+                    }
+                },
+                (Fulfill, Reject),
                 delay
             );
         }
+
+        public IPromiseQueue Queue { get; }
 
         public bool Pending { get; private set; } = true;
 
@@ -82,9 +107,11 @@ namespace IPromise {
             Completed?.Invoke(this, new CompletedEventArgs<T>());
         }
 
-        public IPromise<U> Then<U>(Func<T, U> thenDo)
+        public IPromise<U> Then<U>(
+            Func<T, U> thenDo,
+            IPromiseQueue queue = null)
         {
-            var thenPromise = new Promise<U>();
+            var thenPromise = new Promise<U>(queue);
             if(Pending)
                 Completed += RunOnCompletion(thenPromise, thenDo);
             else if(Rejected)
@@ -114,16 +141,25 @@ namespace IPromise {
             Func<T, U> map, 
             T value)
         {
-            try {
-                promise.Fulfill(map(value));
-            } catch (Exception e) {
-                promise.Reject(e);
-            }
+            
+            Queue.Run(
+                (ValueTuple<Action<T>, Action<Exception>> actions) => {
+                    var (fulfill, reject) = actions;
+                    try {
+                        promise.Fulfill(map(value));
+                    } catch (Exception e) {
+                        promise.Reject(e);
+                    }
+                },
+                (Fulfill, Reject)
+            );
         }
 
-        public IPromise<T> Catch(Action<Exception> catchError)
+        public IPromise<T> Catch(
+            Action<Exception> catchError,
+            IPromiseQueue queue = null)
         {
-            var catchPromise = new Promise<T>();
+            var catchPromise = new Promise<T>(queue);
             if (Pending)
                 Completed += RunOnCompletion(catchPromise, catchError);
             else if (Fulfilled)
@@ -153,15 +189,21 @@ namespace IPromise {
             IPromise<T> promise,
             Action<Exception> catchError) 
         {
-            try
-            {
-                catchError(this.Error);
-                promise.Reject(this.error);
-            }
-            catch (Exception exception)
-            {
-                promise.Reject(exception);
-            }
+            Queue.Run(
+                (ValueTuple<Action<T>, Action<Exception>> actions) => {
+                    var (fulfill, reject) = actions;
+                    try
+                    {
+                        catchError(this.Error);
+                        promise.Reject(this.error);
+                    }
+                    catch (Exception exception)
+                    {
+                        promise.Reject(exception);
+                    }
+                },
+                (Fulfill, Reject)
+            );
         }
     }
 
