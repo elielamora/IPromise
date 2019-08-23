@@ -134,27 +134,34 @@ namespace IPromise {
 
         public IPromise<T> Catch(Action<Exception> catchError)
         {
-            var promise = new Promise<T>();
+            var catchPromise = new Promise<T>();
             if (Pending)
-                Completed += (s, e) =>
-                {
-                    var completedPromise = (Promise<T>)s;
-                    if(completedPromise.Rejected)
-                        TryCatchRejection(promise, catchError);
-                    else
-                        promise.Fulfill(completedPromise.Value);
-                };
+                Completed += RunOnCompletion(catchPromise, catchError);
             else if (Fulfilled)
-                promise.Fulfill(Value);
+                catchPromise.Fulfill(Value);
             else
             {
-                TryCatchRejection(promise, catchError);
+                TryCatchRejection(catchPromise, catchError);
             }
-            return promise;
+            return catchPromise;
+        }
+
+        internal EventHandler<CompletedEventArgs<T>> RunOnCompletion(
+            IPromise<T> catchPromise,
+            Action<Exception> catchError)
+        {
+            return (object sender, CompletedEventArgs<T> eventArgs) =>
+            {
+                var completedPromise = (Promise<T>)sender;
+                if(completedPromise.Rejected)
+                    TryCatchRejection(catchPromise, catchError);
+                else
+                    catchPromise.Fulfill(completedPromise.Value);
+            };
         }
 
         private void TryCatchRejection(
-            Promise<T> promise,
+            IPromise<T> promise,
             Action<Exception> catchError) 
         {
             try
