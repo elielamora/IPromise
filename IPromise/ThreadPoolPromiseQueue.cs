@@ -14,7 +14,14 @@ namespace IPromise
             ThreadPool.QueueUserWorkItem((state) => {
                 if (0 < delay)
                     Thread.Sleep(delay);
-                promiseCallback(fulfill, reject);
+                try
+                {
+                    promiseCallback(fulfill, reject);
+                }
+                catch(Exception e)
+                {
+                    reject(e);
+                }
             });
         }
     }

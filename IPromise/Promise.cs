@@ -18,25 +18,14 @@ namespace IPromise {
             Fulfill(value);
         }
 
-        public Promise(Action<Action<T>, Action<Exception>> promise)
-        {
-            try 
-            {
-                promise(Fulfill, Reject);
-            } 
-            catch (Exception e)
-            {
-                Reject(e);
-            }
-        }
-
         public Promise(
             Action<Action<T>, Action<Exception>> promise,
-            IPromiseQueue onQueue,
+            IPromiseQueue onQueue = null,
             int delay = 0
         )
         {
-            onQueue.Run(
+            var queue = onQueue ?? PromiseQueue.Blocking;
+            queue.Run(
                 promise,
                 Fulfill,
                 Reject,
