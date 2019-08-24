@@ -3,3 +3,4 @@ obj/
 bin/
 coverage.json
 coverage.opencover.xml
+.coverage
