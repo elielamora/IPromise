@@ -19,6 +19,8 @@ namespace IPromise.Tests
                 () => { _ = promise.Value; }
             );
             Assert.That(promise.Error, Is.Null);
+            Assert.That(promise.Fulfilled, Is.False);
+            Assert.That(promise.Rejected, Is.False);
         }
 
         [Test]
