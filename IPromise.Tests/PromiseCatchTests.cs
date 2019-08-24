@@ -15,7 +15,7 @@ namespace IPromise.Tests
         }
 
         [Test]
-        public void CatchCompletedPromise()
+        public void CatchRejectedPromise()
         {
             bool failed = false;
             var promise = new Promise<int>((fulfill, reject) => {
@@ -32,7 +32,7 @@ namespace IPromise.Tests
         }
 
         [Test]
-        public void ReCatchInstantlyFailedPromise()
+        public void DoubleCatchRejectedPromise()
         {
             var recaught = false;
             var differentError = new Exception("Different Failure.");
@@ -53,6 +53,21 @@ namespace IPromise.Tests
             Assert.That(recaughtPromise.Rejected, Is.True);
             Assert.That(recaughtPromise.Error, Is.EqualTo(differentError));
             Assert.That(recaught, Is.True);
+        }
+
+        [Test]
+        public void CatchFulfilledPromise()
+        {
+            var completed = Promise.Of(3);
+            bool caught = false;
+            var catchPromise = completed.Catch((e) =>
+            {
+                caught = true;
+            });
+            
+            Assert.That(caught, Is.False);
+            Assert.That(catchPromise.Fulfilled);
+            Assert.That(catchPromise.Value, Is.EqualTo(3));
         }
 
         [Test]

@@ -36,5 +36,19 @@ namespace IPromise.Tests
             Thread.Sleep(75);
             Assert.That(promise.Fulfilled);
         }
+
+        [Test]
+        public void BlockingPromiseQueueTest()
+        {
+            var promise = new Promise<int>((fulfill, reject) =>
+                {
+                    fulfill(0);
+                },
+                PromiseQueue.Blocking,
+                100
+            );
+            promise.Reject(new Exception("Would fail if async."));
+            Assert.That(promise.Fulfilled);
+        }
     }
 }
