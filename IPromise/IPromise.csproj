@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IsPackable>true</IsPackable>
+    <PackageId>IPromise</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Eliel Amora</Authors>
+    <Company>Eliel Amora</Company>
   </PropertyGroup>
 
 </Project>
